@@ -3,7 +3,6 @@ package contributors
 import contributors.Contributors.LoadingStatus.*
 import contributors.Variant.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.swing.Swing
 import tasks.*
 import java.awt.event.ActionListener
 import javax.swing.SwingUtilities
@@ -81,7 +80,9 @@ interface Contributors: CoroutineScope {
             CONCURRENT -> { // Performing requests concurrently
                 launch {
                     val users = loadContributorsConcurrent(service, req)
-                    updateResults(users, startTime)
+                    withContext(Dispatchers.Main){
+                        updateResults(users, startTime)
+                    }
                 }.setUpCancellation()
             }
             NOT_CANCELLABLE -> { // Performing requests in a non-cancellable way
