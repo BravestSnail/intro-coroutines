@@ -3,6 +3,7 @@ package tasks
 import contributors.*
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 
 suspend fun loadContributorsProgress(
@@ -15,17 +16,16 @@ suspend fun loadContributorsProgress(
             .getOrgReposCallSuspend(req.org)
             .also { logRepos(req, it) }
             .body() ?: listOf()
-        var contributors = emptyList<User>()
+        val contributors = CopyOnWriteArrayList<User>()
         val count = AtomicInteger(0)
 
         repos.map {repo ->
             launch {
-                val users = service
+                contributors += service
                     .getRepoContributorsCallSuspend(req.org, repo.name)
                     .also { logUsers(repo, it) }
                     .bodyList()
-                contributors = (contributors + users).aggregate()
-                updateResults(contributors,count.getAndIncrement() == repos.lastIndex)
+                updateResults(contributors.aggregate(),count.getAndIncrement() == repos.lastIndex)
             }
         }
 
